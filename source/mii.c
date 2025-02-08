@@ -345,3 +345,9 @@ Mii * loadMiis(char * data){
 	}
 	return miis;
 }
+Mii * saveMii() {
+	FATMount();
+	char * seek_file;
+	seek_file = read(FACELIB_Wii);
+	
+}
