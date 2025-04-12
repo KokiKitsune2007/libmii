@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define FACELIB_Wii "isfs://shared2/menu/FaceLib/RFL_DB.dat"
+#define LENGTH 0x4A
 
 char * read(char * path){
 	long Size;
