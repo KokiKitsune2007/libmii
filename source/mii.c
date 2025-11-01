@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <isfs/isfs.h>
 #include <string.h>
+#include "fat.h"
 
 #define FACELIB_Wii "isfs://shared2/menu/FaceLib/RFL_DB.dat"
 #define LENGTH 0x4A
@@ -346,9 +347,45 @@ Mii * loadMiis(char * data){
 	}
 	return miis;
 }
-Mii * saveMii() {
-	FATMount();
-	char * seek_file;
-	seek_file = read(FACELIB_Wii);
-	
+
+int MiitoSD(int slotIndex, const Mii *m, const char *dest) {
+	if (slotIndex  < 0 || slotIndex >= MII_MAX) return -1; // Invalid slot index
+
+	if (ISFS_Initialize() != 0) return -2; // ISFS initialization failed
+	ISFS_Mount();
+	char *db = read(FACELIB_Wii);
+	ISFS_Unmount();
+	if (!db) return -3; // Failed to read Mii database
+
+	int start = slotIndex * MII_SIZE + MII_HEADER; // Calculate start position in file
+	long total = MII_HEADER + MII_MAX * MII_SIZE; // Total size of file
+	if (start + MII_SIZE > total) {
+		free(db);
+		return -4; // Slot index out of bounds
+	}
+	FatMount();
+	int count = FatGetDeviceCount();
+	if (count <= 0) {
+		free(db);
+		return -5; // No FAT device found
+	}
+	char path[256];
+	int result = -6; // Default to write error
+	for (int i = 0; i < count; ++i) {
+		const char *prefix = FatGetDevicePrefix(i);
+		if (!prefix) continue;
+		snprintf(path, sizeof(path), "%s/%s", prefix, dest);
+		FILE *file = fopen(path, "wb");
+		if (!file) continue;
+		size_t written = fwrite(db + start, 1, MII_SIZE, file);
+		fclose(file);
+		if (written == (size_t)MII_SIZE) {
+			result = 0; // Success
+			break;
+		}
+		else remove(path); // Remove incomplete file
+	}
+	FatUnmount();
+	free(db);
+	return result;
 }

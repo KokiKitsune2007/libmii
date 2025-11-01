@@ -135,6 +135,11 @@ typedef struct {
 Mii * loadMiis_Wii();
 Mii * loadMiis(char * data);
 
+// Exports a single Mii slot (0..MII_MAX-1) as a 0x4A-byte binary file to the first mounted FAT device.
+// Returns 0 on success, negative on error.
+// Export a single slot to SD. Returns 0 on success, negative on error.
+int MiitoSD(int slotIndex, const Mii *m, const char *dest);
+
 #ifdef __cplusplus
    }
 #endif /* __cplusplus */
